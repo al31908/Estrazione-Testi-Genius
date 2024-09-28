@@ -1,0 +1,160 @@
+import requests
+from bs4 import BeautifulSoup
+from selenium import webdriver
+import csv
+import re
+from IPython.display import display_html
+import nltk
+from nltk.corpus import stopwords
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+from collections import Counter
+import string 
+from unidecode import unidecode
+
+def get_links_in_chart_rows(url):
+    # scarica la pagina web
+    response = requests.get(url)
+    html = response.content
+
+    # crea un oggetto BeautifulSoup per analizzare l'HTML
+    soup = BeautifulSoup(html, 'html.parser')
+
+    # trova tutti gli elementi con la classe 'chart_row chart_row--light_border chart_row--full_bleed_left chart_row--align_baseline chart_row--no_hover'
+    chart_rows = soup.find_all('div', {'class': 'chart_row chart_row--light_border chart_row--full_bleed_left chart_row--align_baseline chart_row--no_hover'})
+
+    # estrai tutti i link all'interno degli elementi trovati
+    links = []
+    for row in chart_rows:
+        link = row.find('a')
+        if link is not None:
+            links.append(link.get('href'))
+
+    return links
+
+def extract_song_title(url):
+    response = requests.get(url)
+    html = response.text
+    soup = BeautifulSoup(html, 'html.parser')
+    span = soup.find('span', class_='SongHeaderdesktop__HiddenMask-sc-1effuo1-11 iMpFIj')
+    if span is not None:
+        title = span.text.strip()
+        return title
+    else:
+        return None   
+
+def extract_lyrics_with_title(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Estrai il titolo della canzone
+    title = extract_song_title(url)
+    if title is not None:
+        print(f'Titolo: {title}')
+    
+    # Salva il titolo in una variabile
+    titolo = title
+
+    elements = soup.find_all(class_='Lyrics__Container-sc-1ynbvzw-5')
+
+    lyrics = ''
+    for element in elements:
+        # Estrai il testo dagli elementi "div"
+        for content in element.contents:
+            if content.name == 'br':
+                lyrics += ' '
+            elif content.name == 'i' or content.name == 'b' or content.name == 'a':
+                lyrics += content.get_text() + ' '
+            else:
+                if callable(getattr(content, 'strip', None)):
+                    lyrics += content.strip() + ' '
+
+    # Rimuovi i tag HTML
+    clean_lyrics = re.compile('<.*?>')
+    lyrics = re.sub(clean_lyrics, '', lyrics)
+
+    # Rimuovi il testo tra parentesi quadre
+    lyrics = re.sub(r'\[.*?\]', '', lyrics)
+
+    # Rimuovi i caratteri di nuova riga (\n) e sostituiscili con uno spazio
+    lyrics = lyrics.replace('\n', ' ')
+
+    # Assicurati che ogni singola parola sia divisa da uno spazio
+    lyrics = ' '.join(lyrics.split())
+
+    return titolo, lyrics.strip()
+
+
+#SANREMO 2020
+# URL della pagina con i link delle canzoni
+chart_url = 'https://genius.com/albums/Festival-di-sanremo/Festival-di-sanremo-2020'  # Inserisci l'URL effettivo
+
+# Ottieni i link delle canzoni nella pagina
+song_links = get_links_in_chart_rows(chart_url)
+
+# Cicla sui link delle canzoni e estrai il testo
+for link in song_links:
+    lyrics = extract_lyrics_with_title(link)
+    print(lyrics)  # Stampa il testo delle canzoni senza caratteri di nuova riga
+    print('---')
+
+#SANREMO 2021
+# URL della pagina con i link delle canzoni
+chart_url = 'https://genius.com/albums/Festival-di-sanremo/Festival-di-sanremo-2021'  # Inserisci l'URL effettivo
+
+# Ottieni i link delle canzoni nella pagina
+song_links = get_links_in_chart_rows(chart_url)
+
+# Cicla sui link delle canzoni e estrai il testo
+for link in song_links:
+    lyrics = extract_lyrics_with_title(link)
+    print(lyrics)  # Stampa il testo delle canzoni senza caratteri di nuova riga
+    print('---')
+
+#SANREMO 2022
+# URL della pagina con i link delle canzoni
+chart_url = 'https://genius.com/albums/Festival-di-sanremo/Festival-di-sanremo-2022'  # Inserisci l'URL effettivo
+
+# Ottieni i link delle canzoni nella pagina
+song_links = get_links_in_chart_rows(chart_url)
+
+# Cicla sui link delle canzoni e estrai il testo
+for link in song_links:
+    lyrics = extract_lyrics_with_title(link)
+    print(lyrics)  # Stampa il testo delle canzoni senza caratteri di nuova riga
+    print('---')
+
+#SANREMO 2023
+# URL della pagina con i link delle canzoni
+chart_url = 'https://genius.com/albums/Festival-di-sanremo/Festival-di-sanremo-2023'  # Inserisci l'URL effettivo
+
+# Ottieni i link delle canzoni nella pagina
+song_links = get_links_in_chart_rows(chart_url)
+
+# Cicla sui link delle canzoni e estrai il testo
+for link in song_links:
+    lyrics = extract_lyrics_with_title(link)
+    print(lyrics)  # Stampa il testo delle canzoni senza caratteri di nuova riga
+    print('---')
+
+# Elenco di anni di cui si desiderano i dati
+anni = [2020, 2021, 2022, 2023]
+
+# Cicla sugli anni
+for anno in anni:
+    print(f"Processando l'anno: {anno}")
+
+    # Genera l'URL per l'anno corrente
+    chart_url = f'https://genius.com/albums/Festival-di-sanremo/Festival-di-sanremo-{anno}'
+
+    # Ottieni i link delle canzoni nell'anno corrente
+    song_links = get_links_in_chart_rows(chart_url)
+
+    # Cicla sui link delle canzoni e estrai il titolo e il testo
+    for link in song_links:
+        titolo, testo = extract_lyrics_with_title(link)
+
+        # Stampa il testo 
+        
+        print(f"Testo: {testo}")
+
